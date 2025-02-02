@@ -1,54 +1,42 @@
-import React, { lazy, Suspense } from "react";
+import React, {lazy, Suspense, useEffect} from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import {Button} from "primereact/button";
-import {AuthProvider} from "./providers/authProvider";
+import PrivateRoute from "./providers/PrivateRoute";
+import {useAuthStore} from "./store/useAuthStore";
 
-// Lazy-loaded components
+
 const Login = lazy(() => import("./screens/login"));
 const SeoPanel = lazy(() => import("./screens/seo_panel"));
 
-// Simulated authentication function
 
-
-// PrivateRoute component
-const PrivateRoute = ({
-                          isLoggedIn,
-                          children,
-                      }: {
-    isLoggedIn: boolean;
-    children: React.ReactElement;
-}) => {
-    return isLoggedIn ? children : <Navigate to="/login" replace />;
-};
-
-// App component
 const App = () => {
+    const accessToken = useAuthStore((state) => state.accessToken);
+    const user = useAuthStore((state) => state.user);
 
+    useEffect(() => {
+        console.log('Persisted state on initial load:', {
+            isLoggedIn: !!accessToken, // Determine login status
+            user,
+        });
+    }, [accessToken, user]);
 
     return (
-        <>
-            <AuthProvider>
-
-
-
-            <Router>
-                <Suspense fallback={<div>Loading...</div>}>
+        <Router>
+            <Suspense fallback={<div>Loading...</div>}>
                 <Routes>
-                    <Route
-                        path="/login"
-                        element={
-                            <Login
-                                onLogin={(token) => {
-
-                                }}
-                            />
-                        }
-                    />
+                    <Route path="/login" element={<Login />} />
                     <Route
                         path="/seo_panel"
                         element={
-                            <PrivateRoute>
+                            <PrivateRoute requiredRoles={['seo_admin', 'super_admin']}>
                                 <SeoPanel />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <PrivateRoute requiredRoles={['super_admin']}>
+
                             </PrivateRoute>
                         }
                     />
@@ -56,9 +44,6 @@ const App = () => {
                 </Routes>
             </Suspense>
         </Router>
-            </AuthProvider>
-        </>
     );
 };
-
 export default App;
