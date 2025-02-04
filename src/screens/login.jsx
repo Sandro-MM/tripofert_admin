@@ -52,6 +52,7 @@ function Login() {
 
     return (
         <Card style={{
+            marginTop:'24px',
             maxWidth: '800px',
             margin: 'auto',
             display: 'flex',
@@ -76,5 +77,6 @@ function Login() {
         </Card>
 );
 }
+
 
 export default Login;
