@@ -53,7 +53,7 @@ function Login() {
     return (
         <Card style={{
             maxWidth: '800px',
-            margin: 'auto',
+            margin: '50px auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
