@@ -34,15 +34,24 @@ function Login() {
         }
 
         if (data.session) {
-            console.log('Session Data:', data.session); // Debug the session data
+            console.log('Session Data:', data.session);
+            useAuthStore.getState().setUser(data.session.user, data.session.access_token);
+            const { data: roleData, error: roleError } = await supabase
+                .from("admin_users_roles")
+                .select("user_role")
+                .eq("user_id", data.session.user.id)
+                .single();
 
-            // Update auth store state before navigation
-            useAuthStore.getState().setAuth(data.session);
+            if (roleError || !roleData) {
+                console.error("Error fetching role:", roleError);
+                show("Failed to fetch user role", "error");
+                return;
+            }
 
-            const role = data.session.user?.role;
-            const route = roleToRoute[role] || '/login';  // Default to login if no matching role
+            const userRole = roleData.user_role;
+            useAuthStore.getState().setRole(userRole);
 
-            // Navigate to the correct route after state update
+            const route = roleToRoute[userRole] || '/login';
             navigate(route);
 
             show('Login Successful', 'success');
@@ -50,32 +59,35 @@ function Login() {
     };
 
 
+
     return (
         <Card style={{
             marginTop:'24px',
             maxWidth: '800px',
             margin: '50px auto',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+
             gap: '10px',
             justifyContent: 'center'
         }} title="Tripofert Admin Login">
-            <form onSubmit={(e) => {
+            <form style={{width:"100%", display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',}} onSubmit={(e) => {
                 e.preventDefault();
                 const email = e.target.email.value;
                 const password = e.target.password.value;
                 handleLogin(email, password);
             }}>
-                <div style={{margin: '10px 0 3px'}}>Email</div>
-                <InputText type="email" name="email" tabIndex={1}/>
-                <div style={{margin: '10px 0 3px'}}>Password</div>
-                <Password type="password" name="password"
-                          feedback={false} tabIndex={2}/>
-                <Button type="submit" style={{display: 'block', margin: '20px auto 0'}}>Login</Button>
+                <div>
+                    <div style={{margin: '10px 0 3px'}}>Email</div>
+                    <InputText type="email" name="email" tabIndex={1}/>
+                    <div style={{margin: '10px 0 3px'}}>Password</div>
+                    <Password type="password" name="password"
+                              feedback={false} tabIndex={2}/>
+                    <Button type="submit" style={{display: 'block', margin: '20px auto 0'}}>Login</Button>
+                </div>
             </form>
         </Card>
-);
+    );
 }
 
 

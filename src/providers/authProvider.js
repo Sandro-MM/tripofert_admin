@@ -1,22 +1,32 @@
-import { createContext, useEffect, useState, useContext } from 'react';
-import {supabase} from "../utils/supabase";
-
+import { createContext, useEffect, useContext } from "react";
+import { supabase } from "../utils/supabase";
+import { useAuthStore } from "../store/useAuthStore";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const setUser = useAuthStore((state) => state.setUser);
+    const setRole = useAuthStore((state) => state.setRole);
 
     useEffect(() => {
         const getUser = async () => {
-            const { data, error } = await supabase.auth.getUser();
-            if (data) setUser(data.user);
+            const { data: session } = await supabase.auth.getSession();
+            if (session?.session) {
+                setUser(session.session.user, session.session.access_token);
+                fetchUserRole(session.session.user.id);
+            }
         };
 
         getUser();
 
         const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-            setUser(session?.user || null);
+            if (session?.user) {
+                setUser(session.user, session.access_token);
+                fetchUserRole(session.user.id);
+            } else {
+                setUser(null, null);
+                setRole(null);
+            }
         });
 
         return () => {
@@ -24,7 +34,19 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    return <AuthContext.Provider value={{ user, supabase }}>{children}</AuthContext.Provider>;
+    const fetchUserRole = async (userId) => {
+        const { data, error } = await supabase
+            .from("admin_users_roles")
+            .select("user_role")
+            .eq("user_id", userId)
+            .single();
+
+        if (data) {
+            setRole(data.user_role);
+        }
+    };
+
+    return <AuthContext.Provider value={{ supabase }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

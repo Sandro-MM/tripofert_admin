@@ -25,7 +25,6 @@ function SeoPanel() {
 
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
 
         const { error } = await supabase
             .from('seo_data')
@@ -116,7 +115,7 @@ function SeoPanel() {
                         <ProgressSpinner />
                     </Button>
                 ) : (
-                <Button type="submit" tabIndex={3} style={{display: 'block', margin: '20px auto 0'}}>Save</Button>
+                <Button onClick={()=>handleSubmit()} tabIndex={3} style={{display: 'block', margin: '20px auto 0'}}>Save</Button>
                 )}
             </Card>
         </div>
